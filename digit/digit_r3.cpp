@@ -6,9 +6,9 @@ using namespace cv;
 using namespace std;
 
 Mat edge(Mat &);
-Mat findContour(Mat &, Point &, Point &);
-Mat drawGraph(Mat &, Point &, Point &);
-void isolate(vector<vector<Point> > , Mat &);
+Mat findContour(Mat &);
+Mat corners(Mat &);
+
 
 int main(int argc, char *argv[])
 {
@@ -25,10 +25,10 @@ int main(int argc, char *argv[])
 	img = imread(argv[1]);
 
 	canny = edge(img);
-	contour = findContour(canny, x, y);
-	//graph = drawGraph(contour, x, y);
+	contour = findContour(canny);
+	graph = corners(contour);
 
-	imshow("Model", contour);
+	imshow("Model", graph);
 	waitKey();
 }
 
@@ -59,33 +59,56 @@ Mat edge(Mat &img)
 	return canny;
 }
 
-Mat findContour(Mat &canny, Point &x, Point &y)
+Mat findContour(Mat &canny)
 {
 	vector<vector<Point> > contours;
 	vector<Vec4i> h;
-	vector<Point> touches;
-			
+
 	findContours(canny, contours, h, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0,0));
 
 	int s = findBiggestContour(contours);
-	vector<vector<Point> > contours_poly(contours.size());
+	vector<vector<Point> > poly(contours.size());
 	vector<Rect> boundRect(contours.size());
 
 	Mat boundaries = Mat::zeros(canny.size(), CV_8UC1);
 	Mat outline = Mat::zeros(canny.size(), CV_8UC1);
-	Mat points = Mat::zeros(canny.size(), CV_8UC1);
+	Mat pts = Mat::zeros(canny.size(), CV_8UC1);
+
 
 	if(s!=-1)
 	{
-		approxPolyDP( Mat(contours[s]), contours_poly[s], 3, true );
-		boundRect[s] = boundingRect( Mat(contours_poly[s]) );
+		approxPolyDP( Mat(contours[s]), poly[s], 3, true );
+		boundRect[s] = boundingRect( Mat(poly[s]) );
 		rectangle(boundaries, boundRect[s].tl(), boundRect[s].br(), Scalar(255,255,255), 2, 8, 0);
-		drawContours(outline, contours, s, Scalar(255,255,255), 2, 8, h, 0, Point()); 
-	
+		drawContours(outline, contours, s, Scalar(255,255,255), 2, 8, h, 0, Point());
 	}
 
 	return outline;
 }	
+
+Mat corners(Mat &outline)
+{
+	Mat dst, dst_norm, dst_norm_scaled;
+	int thresh = 110;
+
+	cornerHarris( outline, dst, 2, 3, 0.04, BORDER_DEFAULT );
+
+  	normalize( dst, dst_norm, 0, 255, NORM_MINMAX, CV_32FC1, Mat() );
+	convertScaleAbs( dst_norm, dst_norm_scaled );
+
+  	for( int j = 0; j < dst_norm.rows ; j++ )
+    { 
+    	for( int i = 0; i < dst_norm.cols; i++ )
+        {
+           if( (int) dst_norm.at<float>(j,i) > thresh )
+            {
+               circle( dst, Point( i, j ), 5,  Scalar(255,255,255), 2, 8, 0 );
+            }
+       }
+    }
+
+    return dst;
+}
 
 
 
