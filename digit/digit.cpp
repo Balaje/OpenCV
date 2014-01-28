@@ -5,10 +5,14 @@
 using namespace cv;
 using namespace std;
 
+Mat edge(Mat &);
+Mat contour(Mat &);
+void corners(Mat &, Mat &);
+
 int main(int argc, char *argv[])
 {
 //Variable Declaration	
-	Mat img, canny;
+	Mat img, canny, bw;
 	namedWindow("Digit Model", CV_WINDOW_NORMAL);
 	namedWindow("Number",CV_WINDOW_NORMAL);
 	char ch;
@@ -27,13 +31,32 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-//edge
-	Mat gray, blur;
+//edge 
+	canny = edge(img);
+	
+
+//contour 
+	bw = contour(canny);
+	
+
+//corners 
+	corners(bw, img);
+	
+ 	return 0;
+}
+
+Mat edge(Mat &img)
+{
+	Mat gray, blur, canny;
 	cvtColor(img, gray, CV_BGR2GRAY);
 	GaussianBlur(gray, blur, Size(3,3), 0);
 	Canny(blur, canny, 120, 360, 3);
 
-//contour
+	return canny;
+}
+
+Mat contour(Mat &canny)
+{
 	Mat bw;
 	canny.copyTo(bw);
 	vector<vector<Point> > contours;
@@ -44,21 +67,24 @@ int main(int argc, char *argv[])
 		drawContours(bw, contours, i, Scalar(255,255,255), 2, 8, h, 0, Point());
 	}
 
-//corners
+	return bw;
+}
+
+void corners(Mat &bw, Mat &img)
+{
 	Mat dst, dst_norm, dst_norm_scaled;
-  	dst = Mat::zeros( canny.size(), CV_32FC1 );
+	char ch;
 
-  	vector<Point> corners;
+  	dst = Mat::zeros(bw.size(), CV_32FC1);
 
-  
-  	int blockSize = 2;
+   	int blockSize = 2;
   	int apertureSize = 3, thresh=100;
   	double k = 0.04;
   
-  	cornerHarris( bw, dst, blockSize, apertureSize, k, BORDER_DEFAULT );
+  	cornerHarris(bw, dst, blockSize, apertureSize, k, BORDER_DEFAULT);
 
-  	normalize( dst, dst_norm, 0, 255, NORM_MINMAX, CV_32FC1, Mat() );
- 	convertScaleAbs( dst_norm, dst_norm_scaled );
+  	normalize(dst, dst_norm, 0, 255, NORM_MINMAX, CV_32FC1, Mat());
+ 	convertScaleAbs(dst_norm, dst_norm_scaled);
 
  	Mat small;
  	Point corner;
@@ -69,11 +95,11 @@ int main(int argc, char *argv[])
  		{
  			if( (int) dst_norm.at<float>(i,j) > thresh)
  			{
- 				corner = Point(j-3,i-3);
-				rectangle(img, corner, Point(corner.x+6, corner.y+6), Scalar(0,255,255), 3, 8, 0);	
-				Rect ROI = Rect(corner.x, corner.y, 6, 6);
+ 				corner = Point(j-2,i-2);
+				rectangle(img, corner, Point(corner.x+4, corner.y+4), Scalar(255,255,255), 3, 8, 0);	
+				Rect ROI = Rect(corner.x, corner.y, 4, 4);
 				small=bw(ROI);
- 				circle(dst_norm_scaled, Point(j,i), 5, Scalar(0), 2, 8, 0);			
+ 				circle(dst_norm_scaled, Point(j,i), 5, Scalar(255,255,255), 2, 8, 0);			
 
  				for(int i=0; i<small.rows; i++)
 				{
@@ -83,14 +109,16 @@ int main(int argc, char *argv[])
 						printf("%d ", (int)small.at<uchar>(i,j)/255);
 					}	
 				}	
-				printf("\n_________________________________________________________________________________________________________________\n");
- 				imshow("Digit Model", small);
+
+				printf("\n===================================================\n");
  				imshow("Number", dst_norm_scaled);
  				ch=waitKey();
  				if(ch==27)
- 					return 0;
+ 					return ;
  			}	
  		}	
- 	}	 	
- 	return 0;
+ 	}
+		 	
 }
+
+
