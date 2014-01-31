@@ -6,7 +6,7 @@ using namespace cv;
 using namespace std;
 
 int find(vector<vector<Point> >);
-void sixornine(Mat &, vector<Point2f>);
+
 int main(int argc, char *argv[])
 {
     Mat img, gray, edge, contour;
@@ -16,11 +16,11 @@ int main(int argc, char *argv[])
         return -1;
     }
     img = imread(argv[1]);
-    /*if(!img.data)
+    if(!img.data)
     {
         cout<<"\nInvalid Image";
             return -1;
-            }*/
+    }
 
     //edge
     Mat blur;
@@ -29,7 +29,6 @@ int main(int argc, char *argv[])
     Canny(blur, edge, 120, 360, 3);
 
     //contours
-    Mat bw;
     vector<vector<Point> > contours;
     vector<Vec4i> h;
     findContours(edge, contours, h, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, Point(0,0));
@@ -42,7 +41,8 @@ int main(int argc, char *argv[])
 
     int count=0;
     Point previous = center.back();
-    for(int i=0; i<contours.size(); i++)
+    int i=0;
+    for(i=0; i<contours.size(); i++)
     {
         if(s!=i)
         {
@@ -56,6 +56,9 @@ int main(int argc, char *argv[])
                 count--;
                 center.pop_back();
             }
+            line(img, center[i], Point(0,0), Scalar(0,0,255), 2, 8, 0);
+            imshow("Your Digit",img);
+            waitKey();
             previous = center[i];
             center.pop_back();
         }
@@ -68,17 +71,14 @@ int main(int argc, char *argv[])
     if(count == 2)
     {
         printf("Possible digits are 6 or 9\n");
-        sixornine(img, center);
+        printf("Computing... \n");
     }
+
     namedWindow("Your Digit", CV_WINDOW_NORMAL);
     imshow("Your Digit", img);
     waitKey();
 }
-void sixornine(Mat &img, vector<Point2f> centers)
-{
-    printf("Computing..... ");
 
-}
 int find(vector<vector<Point> > contours)
 {
     int index=-1, size=0;
@@ -91,5 +91,4 @@ int find(vector<vector<Point> > contours)
         }
     }
     return index;
-
 }
