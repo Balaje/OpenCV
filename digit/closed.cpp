@@ -49,42 +49,43 @@ int main(int argc, char *argv[])
     {
         if(s!=i)
         {
-            approxPolyDP(Mat(contours[i]), poly[i] ,3, true);
-            minEnclosingCircle((Mat)poly[i], center[i], radius[i]);
-            count++;//increases contour count by one
-            int dist = sqrt((previous.x-center[i].x)*(previous.x-center[i].x)+(previous.y-center[i].y)*(previous.y-center[i].y));
-            circle(img, center[i], radius[i], Scalar(255,0,0), 1, 8, 0);
-            if(dist < 10)
-            {
-                count--;   //if two contours are very close to each other, the contour count is reduced by 1
-                center.pop_back();
-            }
-            {
-                line(img, center[i], Point(0,0), Scalar(0,0,255), 2, 8, 0);
-                c.push_back(center[i]);   //contains the center of the contours, used to distinguish between 6/9
-            }
-            previous = center[i];
-            center.pop_back();
+         approxPolyDP(Mat(contours[i]), poly[i] ,3, true);
+         minEnclosingCircle((Mat)poly[i], center[i], radius[i]);
+         count++;//increases contour count by one
+         int dist = sqrt((previous.x-center[i].x)*(previous.x-center[i].x)+(previous.y-center[i].y)*(previous.y-center[i].y));
+         if(dist < 10)
+         {
+             count--;   //if two contours are very close to each other, the contour count is reduced by 1
+             center.pop_back();
+         }
+         {
+             circle(img, center[i], radius[i], Scalar(255,255,0), 3, 8, 0);
+             c.push_back(center[i]);   //contains the center of the contours, used to distinguish between 6/9
+         }
+         previous = center[i];
+         center.pop_back();
         }
     }
-    printf("%d\n", count);
 
     //predicts the result by comparing the number of closed curves
     if(count == 3)
     {
-        printf("Possible digit is 8\n");
+        printf("Number of closed curves = %d\n",count);
+        printf("The digit detected is 8\n");
     }
     if(count == 2)
     {
-        printf("Possible digits are 6 or 9\n");
+        printf("Number of closed curves = %d\n",count);
+
         if(c[0].y > c[1].y)
-            printf("Its a 9!!!\n");
+            printf("The digit detected is 9.\n");
         else if(c[0].y < c[1].y)
-            printf("Its a 6!!!\n");
+            printf("The digit detected is 6.\n");
     }
     if(count==1)
     {
-        printf("Its a zero!!!\n");
+        printf("Number of closed curves = %d\n",count);
+        printf("The digit detected is 0.\n");
     }
     namedWindow("Your Digit", CV_WINDOW_NORMAL);
     imshow("Your Digit", img);
